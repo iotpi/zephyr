@@ -2,11 +2,17 @@
 
 cmake_minimum_required(VERSION 3.20.0)
 
+include(extensions)
+include(west)
 include(root)
+include(zephyr_module)
 include(boards)
-include(arch)
+include(hwm_v2)
 include(configuration_files)
+
 include(kconfig)
+include(arch_v2)
+include(soc_v2)
 
 find_package(TargetTools)
 
@@ -103,19 +109,12 @@ if(LIBS)
   message(FATAL_ERROR "This variable is not supported, see SOURCES instead")
 endif()
 
-if(CONFIG_ZTEST_NEW_API)
-  target_sources(testbinary PRIVATE
-      ${ZEPHYR_BASE}/subsys/testsuite/ztest/src/ztest_new.c
-      ${ZEPHYR_BASE}/subsys/testsuite/ztest/src/ztest_mock.c
-      ${ZEPHYR_BASE}/subsys/testsuite/ztest/src/ztest_rules.c
-      ${ZEPHYR_BASE}/subsys/testsuite/ztest/src/ztest_defaults.c
-      )
-else()
-  target_sources(testbinary PRIVATE
-      ${ZEPHYR_BASE}/subsys/testsuite/ztest/src/ztest.c
-      ${ZEPHYR_BASE}/subsys/testsuite/ztest/src/ztest_mock.c
-      )
-endif()
+target_sources(testbinary PRIVATE
+  ${ZEPHYR_BASE}/subsys/testsuite/ztest/src/ztest.c
+  ${ZEPHYR_BASE}/subsys/testsuite/ztest/src/ztest_mock.c
+  ${ZEPHYR_BASE}/subsys/testsuite/ztest/src/ztest_rules.c
+  ${ZEPHYR_BASE}/subsys/testsuite/ztest/src/ztest_defaults.c
+)
 
 target_compile_definitions(test_interface INTERFACE ZTEST_UNITTEST)
 

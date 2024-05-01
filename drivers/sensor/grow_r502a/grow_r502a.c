@@ -107,7 +107,6 @@ static void uart_cb_handler(const struct device *dev, void *user_data)
 
 static int fps_led_control(const struct device *dev, struct led_params *led_control)
 {
-	struct grow_r502a_data *drv_data = dev->data;
 	union r502a_packet rx_packet = {0};
 	char const led_ctrl_len = 5;
 
@@ -137,7 +136,6 @@ static int fps_led_control(const struct device *dev, struct led_params *led_cont
 
 static int fps_verify_password(const struct device *dev)
 {
-	struct grow_r502a_data *drv_data = dev->data;
 	union r502a_packet rx_packet = {0};
 	char const verify_pwd_len = 5;
 
@@ -245,7 +243,6 @@ unlock:
 
 static int fps_get_image(const struct device *dev)
 {
-	struct grow_r502a_data *drv_data = dev->data;
 	union r502a_packet rx_packet = {0};
 	char const get_img_len = 1;
 
@@ -284,7 +281,6 @@ static int fps_get_image(const struct device *dev)
 
 static int fps_image_to_char(const struct device *dev, uint8_t char_buf_idx)
 {
-	struct grow_r502a_data *drv_data = dev->data;
 	union r502a_packet rx_packet = {0};
 	char const img_to_char_len = 2;
 
@@ -312,7 +308,6 @@ static int fps_image_to_char(const struct device *dev, uint8_t char_buf_idx)
 
 static int fps_create_model(const struct device *dev)
 {
-	struct grow_r502a_data *drv_data = dev->data;
 	union r502a_packet rx_packet = {0};
 	char const create_model_len = 1;
 
@@ -340,7 +335,6 @@ static int fps_create_model(const struct device *dev)
 
 static int fps_store_model(const struct device *dev, uint16_t id)
 {
-	struct grow_r502a_data *drv_data = dev->data;
 	union r502a_packet rx_packet = {0};
 	char const store_model_len = 4;
 
@@ -380,7 +374,6 @@ static int fps_store_model(const struct device *dev, uint16_t id)
 
 static int fps_delete_model(const struct device *dev, uint16_t id, uint16_t count)
 {
-	struct grow_r502a_data *drv_data = dev->data;
 	union r502a_packet rx_packet = {0};
 	char const delete_model_len = 5;
 
@@ -711,7 +704,7 @@ static int grow_r502a_init(const struct device *dev)
 	}
 
 	if (IS_ENABLED(CONFIG_GROW_R502A_GPIO_POWER)) {
-		if (!device_is_ready(cfg->vin_gpios.port)) {
+		if (!gpio_is_ready_dt(&cfg->vin_gpios)) {
 			LOG_ERR("GPIO port %s not ready", cfg->vin_gpios.port->name);
 			return -ENODEV;
 		}
@@ -724,7 +717,7 @@ static int grow_r502a_init(const struct device *dev)
 
 		k_sleep(K_MSEC(R502A_DELAY));
 
-		if (!device_is_ready(cfg->act_gpios.port)) {
+		if (!gpio_is_ready_dt(&cfg->act_gpios)) {
 			LOG_ERR("GPIO port %s not ready", cfg->act_gpios.port->name);
 			return -ENODEV;
 		}

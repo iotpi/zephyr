@@ -22,10 +22,10 @@ DEFAULT_LINKSERVER_SEMIHOST_PORT = 3334
 
 class LinkServerBinaryRunner(ZephyrBinaryRunner):
     '''Runner front-end for NXP Linkserver'''
-    def __init__(self, cfg, device,
+    def __init__(self, cfg, device, core,
                  linkserver=DEFAULT_LINKSERVER_EXE,
                  dt_flash=True, erase=True,
-                 probe=1,
+                 probe='#1',
                  gdb_host='',
                  gdb_port=DEFAULT_LINKSERVER_GDB_PORT,
                  semihost_port=DEFAULT_LINKSERVER_SEMIHOST_PORT,
@@ -39,6 +39,7 @@ class LinkServerBinaryRunner(ZephyrBinaryRunner):
         self.elf_name = cfg.elf_file
         self.gdb_cmd = cfg.gdb if cfg.gdb else None
         self.device = device
+        self.core = core
         self.linkserver = linkserver
         self.dt_flash = dt_flash
         self.erase = erase
@@ -68,8 +69,10 @@ class LinkServerBinaryRunner(ZephyrBinaryRunner):
     def do_add_parser(cls, parser):
         parser.add_argument('--device', required=True, help='device name')
 
-        parser.add_argument('--probe', default=1,
-                            help='interface to use (index, no serial number), default is 1')
+        parser.add_argument('--core', required=False, help='core of the device')
+
+        parser.add_argument('--probe', default='#1',
+                            help='interface to use (index, or serial number, default is #1')
 
         parser.add_argument('--tui', default=False, action='store_true',
                             help='if given, GDB uses -tui')
@@ -92,7 +95,7 @@ class LinkServerBinaryRunner(ZephyrBinaryRunner):
     @classmethod
     def do_create(cls, cfg, args):
 
-        return LinkServerBinaryRunner(cfg, args.device,
+        return LinkServerBinaryRunner(cfg, args.device, args.core,
                                  linkserver=args.linkserver,
                                  dt_flash=args.dt_flash,
                                  erase=args.erase,
@@ -108,7 +111,7 @@ class LinkServerBinaryRunner(ZephyrBinaryRunner):
         if not hasattr(self, '_linkserver_version'):
             linkserver_version_cmd=[self.linkserver, "-v"]
             ls_output=self.check_output(linkserver_version_cmd)
-            self.linkserver_version = str(ls_output.split()[1].decode())
+            self.linkserver_version = str(ls_output.split()[1].decode()).lower()
 
         return self.linkserver_version
 
@@ -120,13 +123,21 @@ class LinkServerBinaryRunner(ZephyrBinaryRunner):
         if command == 'flash':
             self.flash(**kwargs)
         else:
+            if self.core is not None:
+                _cmd_core = [ "-c",  self.core ]
+            else:
+                _cmd_core = []
+
             linkserver_cmd = ([self.linkserver] +
                               ["gdbserver"]    +
-                              ["--probe", "#"+str(self.probe) ] +
+                              ["--probe", str(self.probe) ] +
                               ["--gdb-port", str(self.gdb_port )] +
                               ["--semihost-port", str(self.semihost_port) ] +
-			                  self.override_cli +
+                              _cmd_core +
+                              self.override_cli +
                               [self.device])
+
+            self.logger.debug(f'LinkServer cmd:  + {linkserver_cmd}')
 
             if command in ('debug', 'attach'):
                 if self.elf_name is  None or not os.path.isfile(self.elf_name):
@@ -153,8 +164,13 @@ class LinkServerBinaryRunner(ZephyrBinaryRunner):
 
     def do_erase(self, **kwargs):
 
-        linkserver_cmd = ([self.linkserver, "flash"] + ["--probe", "#"+str(self.probe)] +
-                          [self.device] + ["erase"])
+        if self.core is not None:
+            _cmd_core = ":"+self.core
+        else:
+            _cmd_core = ""
+
+        linkserver_cmd = ([self.linkserver, "flash"] + ["--probe", str(self.probe)] +
+                          [self.device+_cmd_core] + ["erase"])
         self.logger.debug("flash erase command = " + str(linkserver_cmd))
         self.check_call(linkserver_cmd)
 
@@ -170,7 +186,13 @@ class LinkServerBinaryRunner(ZephyrBinaryRunner):
 
     def flash(self, **kwargs):
 
-        linkserver_cmd = ([self.linkserver, "flash"] + ["--probe", "#"+str(self.probe)] + self.override_cli + [self.device])
+        if self.core is not None:
+            _cmd_core = ":"+self.core
+        else:
+            _cmd_core = ""
+
+        linkserver_cmd = ([self.linkserver, "flash"] + ["--probe", str(self.probe)] + self.override_cli + [self.device+_cmd_core])
+        self.logger.debug(f'LinkServer cmd:  + {linkserver_cmd}')
 
         if self.erase:
             self.do_erase()
@@ -192,5 +214,9 @@ class LinkServerBinaryRunner(ZephyrBinaryRunner):
         self.logger.debug("flash command = " + str(linkserver_cmd))
         kwargs = {}
         if not self.logger.isEnabledFor(logging.DEBUG):
-            kwargs['stderr'] = subprocess.DEVNULL
+            if self.linkserver_version_str < "v1.3.15":
+                kwargs['stderr'] = subprocess.DEVNULL
+            else:
+                kwargs['stdout'] = subprocess.DEVNULL
+
         self.check_call(linkserver_cmd, **kwargs)

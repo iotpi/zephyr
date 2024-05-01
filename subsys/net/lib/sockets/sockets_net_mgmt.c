@@ -5,11 +5,7 @@
  */
 
 #include <stdbool.h>
-#ifdef CONFIG_ARCH_POSIX
-#include <fcntl.h>
-#else
 #include <zephyr/posix/fcntl.h>
-#endif
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(net_sock_mgmt, CONFIG_NET_SOCKETS_LOG_LEVEL);
@@ -17,7 +13,7 @@ LOG_MODULE_REGISTER(net_sock_mgmt, CONFIG_NET_SOCKETS_LOG_LEVEL);
 #include <zephyr/kernel.h>
 #include <zephyr/sys/util.h>
 #include <zephyr/net/socket.h>
-#include <zephyr/syscall_handler.h>
+#include <zephyr/internal/syscall_handler.h>
 #include <zephyr/sys/fdtable.h>
 #include <zephyr/net/socket_net_mgmt.h>
 #include <zephyr/net/ethernet_mgmt.h>
@@ -209,8 +205,12 @@ again:
 
 	if (info) {
 		ret = info_len + sizeof(hdr);
-		ret = MIN(max_len, ret);
-		memcpy(&copy_to[sizeof(hdr)], info, ret);
+		if (ret > max_len) {
+			errno = EMSGSIZE;
+			return -1;
+		}
+
+		memcpy(&copy_to[sizeof(hdr)], info, info_len);
 	} else {
 		ret = 0;
 	}
@@ -309,7 +309,8 @@ static ssize_t net_mgmt_sock_write(void *obj, const void *buffer,
 static int net_mgmt_sock_ioctl(void *obj, unsigned int request,
 			       va_list args)
 {
-	return 0;
+	errno = EOPNOTSUPP;
+	return -1;
 }
 
 static int net_mgmt_sock_bind(void *obj, const struct sockaddr *addr,

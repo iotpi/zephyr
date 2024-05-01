@@ -51,7 +51,7 @@ Building, Flashing and Running
 
 .. zephyr-app-commands::
    :zephyr-app: samples/boards/esp32/deep_sleep
-   :board: esp32
+   :board: esp32_devkitc_wroom/esp32/procpu
    :goals: build flash
    :compact:
 
@@ -71,4 +71,4 @@ sample below is for GPIO2.
    Wake up from GPIO 2
    Enabling timer wakeup, 20s
    Enabling EXT1 wakeup on pins GPIO2, GPIO4
-   Entering deep sleep
+   Powering off

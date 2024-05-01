@@ -26,6 +26,9 @@ LOG_MODULE_REGISTER(cyw43xxx_driver);
 
 #include <stdint.h>
 
+BUILD_ASSERT(DT_PROP(DT_CHOSEN(zephyr_bt_uart), hw_flow_control) == 1,
+		"hw_flow_control must be enabled for HCI H4 UART");
+
 #define DT_DRV_COMPAT infineon_cyw43xxx_bt_hci
 
 /* BT settling time after power on */
@@ -221,7 +224,7 @@ int bt_h4_vnd_setup(const struct device *dev)
 	struct gpio_dt_spec bt_reg_on = GPIO_DT_SPEC_GET(DT_DRV_INST(0), bt_reg_on_gpios);
 
 	/* Check BT REG_ON gpio instance */
-	if (!device_is_ready(bt_reg_on.port)) {
+	if (!gpio_is_ready_dt(&bt_reg_on)) {
 		LOG_ERR("Error: failed to configure bt_reg_on %s pin %d",
 			bt_reg_on.port->name, bt_reg_on.pin);
 		return -EIO;

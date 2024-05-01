@@ -31,10 +31,11 @@ def test_runner_imports():
                     'mdb-nsim',
                     'mdb-hw',
                     'misc-flasher',
-                    'native_gdb',
+                    'native',
                     'nios2',
                     'nrfjprog',
                     'nrfutil',
+                    'nxp_s32dbg',
                     'openocd',
                     'pyocd',
                     'qemu',
@@ -43,6 +44,7 @@ def test_runner_imports():
                     'stm32cubeprogrammer',
                     'stm32flash',
                     'trace32',
+                    'teensy',
                     'uf2',
                     'xtensa'))
     assert runner_names == expected

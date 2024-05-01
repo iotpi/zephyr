@@ -22,7 +22,6 @@ config PWM_INIT_PRIORITY
 
 config PWM_SHELL
 	bool "PWM shell"
-	default y
 	depends on SHELL
 	help
 	  Enable the PWM related shell commands.
@@ -41,7 +40,7 @@ source "drivers/pwm/Kconfig.stm32"
 
 source "drivers/pwm/Kconfig.sifive"
 
-source "drivers/pwm/Kconfig.nrf5_sw"
+source "drivers/pwm/Kconfig.nrf_sw"
 
 source "drivers/pwm/Kconfig.nrfx"
 
@@ -96,5 +95,11 @@ source "drivers/pwm/Kconfig.xmc4xxx_ccu4"
 source "drivers/pwm/Kconfig.xmc4xxx_ccu8"
 
 source "drivers/pwm/Kconfig.mcux_ctimer"
+
+source "drivers/pwm/Kconfig.numaker"
+
+source "drivers/pwm/Kconfig.nxp_s32_emios"
+
+source "drivers/pwm/Kconfig.ene"
 
 endif # PWM

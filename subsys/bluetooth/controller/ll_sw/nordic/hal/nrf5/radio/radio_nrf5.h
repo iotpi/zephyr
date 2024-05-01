@@ -10,13 +10,17 @@
 /* Common radio resources */
 #include "radio_nrf5_resources.h"
 
-/* Helpers for radio timing conversions */
+/* Helpers for radio timing conversions.
+ * These has to come before the radio_*.h include below.
+ */
 #define HAL_RADIO_NS2US_CEIL(ns)  ((ns + 999)/1000)
 #define HAL_RADIO_NS2US_ROUND(ns) ((ns + 500)/1000)
 
 /* SoC specific defines */
-#if defined(CONFIG_SOC_SERIES_BSIM_NRFXX)
-#include "radio_sim_nrfxx.h"
+#if defined(CONFIG_BOARD_NRF52_BSIM)
+#include "radio_sim_nrf52.h"
+#elif defined(CONFIG_BOARD_NRF5340BSIM_NRF5340_CPUNET)
+#include "radio_sim_nrf5340.h"
 #elif defined(CONFIG_SOC_SERIES_NRF51X)
 #include "radio_nrf51.h"
 #elif defined(CONFIG_SOC_NRF52805)
@@ -40,7 +44,9 @@
 #error "Unsupported SoC."
 #endif
 
-/* Define to reset PPI registration */
+/* Define to reset PPI registration.
+ * This has to come before the ppi/dppi includes below.
+ */
 #define NRF_PPI_NONE 0
 
 /* This has to come before the ppi/dppi includes below. */
@@ -64,13 +70,6 @@
 
 #include "radio_nrf5_txp.h"
 
-/* SoC specific Radio PDU length field maximum value */
-#if defined(CONFIG_SOC_SERIES_NRF51X)
-#define HAL_RADIO_PDU_LEN_MAX (BIT(5) - 1)
-#else
-#define HAL_RADIO_PDU_LEN_MAX (BIT(8) - 1)
-#endif
-
 /* Common NRF_RADIO power-on reset value. Refer to Product Specification,
  * RADIO Registers section for the documented reset values.
  *
@@ -78,3 +77,17 @@
  *       In the future if MDK or nRFx header include these, use them instead.
  */
 #define HAL_RADIO_RESET_VALUE_PCNF1 0x00000000UL
+
+/* SoC specific Radio PDU length field maximum value */
+#if defined(CONFIG_SOC_SERIES_NRF51X)
+#define HAL_RADIO_PDU_LEN_MAX (BIT(5) - 1)
+#else
+#define HAL_RADIO_PDU_LEN_MAX (BIT(8) - 1)
+#endif
+
+/* This is delay between PPI task START and timer actual start counting. */
+#if !defined(CONFIG_SOC_SERIES_BSIM_NRFXX)
+#define HAL_RADIO_TMR_START_DELAY_US 1U
+#else /* For simulated targets there is no delay for the PPI task -> TIMER start */
+#define HAL_RADIO_TMR_START_DELAY_US 0U
+#endif

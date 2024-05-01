@@ -119,8 +119,7 @@ static void cap_discovery_complete_cb(struct bt_conn *conn, int err,
 	k_sem_give(&sem_cas_discovery);
 }
 
-static void unicast_start_complete_cb(struct bt_bap_unicast_group *unicast_group,
-				      int err, struct bt_conn *conn)
+static void unicast_start_complete_cb(int err, struct bt_conn *conn)
 {
 	if (err != 0) {
 		printk("Failed to start (failing conn %p): %d", conn, err);
@@ -138,8 +137,7 @@ static void unicast_update_complete_cb(int err, struct bt_conn *conn)
 	}
 }
 
-static void unicast_stop_complete_cb(struct bt_bap_unicast_group *unicast_group, int err,
-				     struct bt_conn *conn)
+static void unicast_stop_complete_cb(int err, struct bt_conn *conn)
 {
 	if (err != 0) {
 		printk("Failed to stop (failing conn %p): %d", conn, err);
@@ -180,27 +178,15 @@ static void print_hex(const uint8_t *ptr, size_t len)
 	}
 }
 
-static void print_ltv_elem(const char *str, uint8_t type, uint8_t value_len, const uint8_t *value,
-			   size_t cnt)
+static bool print_cb(struct bt_data *data, void *user_data)
 {
-	printk("%s #%zu: type 0x%02x value_len %u\n", str, cnt, type, value_len);
-	print_hex(value, value_len);
+	const char *str = (const char *)user_data;
+
+	printk("%s: type 0x%02x value_len %u\n", str, data->type, data->data_len);
+	print_hex(data->data, data->data_len);
 	printk("\n");
-}
 
-static void print_ltv_array(const char *str, const uint8_t *ltv_data, size_t ltv_data_len)
-{
-	size_t cnt = 0U;
-
-	for (size_t i = 0U; i < ltv_data_len; i++) {
-		const uint8_t len = ltv_data[i++];
-		const uint8_t type = ltv_data[i++];
-		const uint8_t *value = &ltv_data[i];
-		const uint8_t value_len = len - sizeof(type);
-
-		print_ltv_elem(str, type, value_len, value, cnt++);
-		i += value_len;
-	}
+	return true;
 }
 
 static void print_remote_codec(const struct bt_audio_codec_cap *codec_cap, enum bt_audio_dir dir)
@@ -208,15 +194,15 @@ static void print_remote_codec(const struct bt_audio_codec_cap *codec_cap, enum 
 	printk("codec id 0x%02x cid 0x%04x vid 0x%04x count %u\n", codec_cap->id, codec_cap->cid,
 	       codec_cap->vid, codec_cap->data_len);
 
-	if (codec_cap->id == BT_AUDIO_CODEC_LC3_ID) {
-		print_ltv_array("data", codec_cap->data, codec_cap->data_len);
+	if (codec_cap->id == BT_HCI_CODING_FORMAT_LC3) {
+		bt_audio_data_parse(codec_cap->data, codec_cap->data_len, print_cb, "data");
 	} else { /* If not LC3, we cannot assume it's LTV */
 		printk("data: ");
 		print_hex(codec_cap->data, codec_cap->data_len);
 		printk("\n");
 	}
 
-	print_ltv_array("meta", codec_cap->meta, codec_cap->meta_len);
+	bt_audio_data_parse(codec_cap->meta, codec_cap->meta_len, print_cb, "meta");
 }
 
 static void add_remote_sink(struct bt_bap_ep *ep)
@@ -342,7 +328,7 @@ static int unicast_group_create(struct bt_bap_unicast_group **out_unicast_group)
 	return err;
 }
 
-static int unicast_audio_start(struct bt_conn *conn, struct bt_bap_unicast_group *unicast_group)
+static int unicast_audio_start(struct bt_conn *conn)
 {
 	int err = 0;
 	struct bt_cap_unicast_audio_start_stream_param stream_param;
@@ -356,9 +342,8 @@ static int unicast_audio_start(struct bt_conn *conn, struct bt_bap_unicast_group
 	stream_param.stream = &unicast_streams[0];
 	stream_param.ep = unicast_sink_eps[0];
 	stream_param.codec_cfg = &unicast_preset_48_2_1.codec_cfg;
-	stream_param.qos = &unicast_preset_48_2_1.qos;
 
-	err = bt_cap_initiator_unicast_audio_start(&param, unicast_group);
+	err = bt_cap_initiator_unicast_audio_start(&param);
 	if (err != 0) {
 		printk("Failed to start unicast audio: %d\n", err);
 		return err;
@@ -402,7 +387,7 @@ static void audio_timer_timeout(struct k_work *work)
 	net_buf_add_mem(buf, buf_data, len_to_send);
 	buf_to_send = buf;
 
-	ret = bt_bap_stream_send(stream, buf_to_send, 0, BT_ISO_TIMESTAMP_NONE);
+	ret = bt_bap_stream_send(stream, buf_to_send, 0);
 	if (ret < 0) {
 		printk("Failed to send audio data on streams: (%d)\n", ret);
 		net_buf_unref(buf_to_send);
@@ -470,7 +455,7 @@ int cap_initiator_setup(struct bt_conn *conn)
 		return err;
 	}
 
-	err = unicast_audio_start(conn, unicast_group);
+	err = unicast_audio_start(conn);
 	if (err != 0) {
 		return err;
 	}

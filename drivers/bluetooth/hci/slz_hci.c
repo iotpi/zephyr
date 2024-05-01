@@ -16,11 +16,14 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(bt_hci_driver_slz);
 
-#define SL_BT_CONFIG_ACCEPT_LIST_SIZE	1
-#define SL_BT_CONFIG_MAX_CONNECTIONS	1
-#define SL_BT_CONFIG_USER_ADVERTISERS	1
-#define SL_BT_CONTROLLER_BUFFER_MEMORY  CONFIG_BT_SILABS_HCI_BUFFER_MEMORY
-#define SL_BT_SILABS_LL_STACK_SIZE	1024
+#define SL_BT_CONFIG_ACCEPT_LIST_SIZE				1
+#define SL_BT_CONFIG_MAX_CONNECTIONS				1
+#define SL_BT_CONFIG_USER_ADVERTISERS				1
+#define SL_BT_CONTROLLER_BUFFER_MEMORY				CONFIG_BT_SILABS_HCI_BUFFER_MEMORY
+#define SL_BT_CONTROLLER_LE_BUFFER_SIZE_MAX			CONFIG_BT_BUF_ACL_TX_COUNT
+#define SL_BT_CONTROLLER_COMPLETED_PACKETS_THRESHOLD		1
+#define SL_BT_CONTROLLER_COMPLETED_PACKETS_EVENTS_TIMEOUT	3
+#define SL_BT_SILABS_LL_STACK_SIZE				1024
 
 static K_KERNEL_STACK_DEFINE(slz_ll_stack, SL_BT_SILABS_LL_STACK_SIZE);
 static struct k_thread slz_ll_thread;
@@ -52,7 +55,6 @@ uint32_t hci_common_transport_transmit(uint8_t *data, int16_t len)
 {
 	struct net_buf *buf;
 	uint8_t packet_type = data[0];
-	uint8_t flags;
 	uint8_t event_code;
 
 	LOG_HEXDUMP_DBG(data, len, "host packet data:");
@@ -64,7 +66,6 @@ uint32_t hci_common_transport_transmit(uint8_t *data, int16_t len)
 	switch (packet_type) {
 	case h4_event:
 		event_code = data[0];
-		flags = bt_hci_evt_get_flags(event_code);
 		buf = bt_buf_get_evt(event_code, false, K_FOREVER);
 		break;
 	case h4_acl:
@@ -76,12 +77,7 @@ uint32_t hci_common_transport_transmit(uint8_t *data, int16_t len)
 	}
 
 	net_buf_add_mem(buf, data, len);
-	if (IS_ENABLED(CONFIG_BT_RECV_BLOCKING) &&
-	    (packet_type == h4_event) && (flags & BT_HCI_EVT_FLAG_RECV_PRIO)) {
-		bt_recv_prio(buf);
-	} else {
-		bt_recv(buf);
-	}
+	bt_recv(buf);
 
 	sl_btctrl_hci_transmit_complete(0);
 
@@ -114,6 +110,15 @@ done:
 	return rv;
 }
 
+static void slz_thread_func(void *p1, void *p2, void *p3)
+{
+	ARG_UNUSED(p1);
+	ARG_UNUSED(p2);
+	ARG_UNUSED(p3);
+
+	slz_ll_thread_func();
+}
+
 static int slz_bt_open(void)
 {
 	int ret;
@@ -121,7 +126,7 @@ static int slz_bt_open(void)
 	/* Start RX thread */
 	k_thread_create(&slz_ll_thread, slz_ll_stack,
 			K_KERNEL_STACK_SIZEOF(slz_ll_stack),
-			(k_thread_entry_t)slz_ll_thread_func, NULL, NULL, NULL,
+			slz_thread_func, NULL, NULL, NULL,
 			K_PRIO_COOP(CONFIG_BT_DRIVER_RX_HIGH_PRIO), 0,
 			K_NO_WAIT);
 
@@ -134,6 +139,8 @@ static int slz_bt_open(void)
 		LOG_ERR("Failed to allocate memory %d", ret);
 		return -ENOMEM;
 	}
+
+	sl_btctrl_configure_le_buffer_size(SL_BT_CONTROLLER_LE_BUFFER_SIZE_MAX);
 
 	ret = sl_btctrl_init_ll();
 	if (ret) {
@@ -154,6 +161,10 @@ static int slz_bt_open(void)
 		LOG_ERR("Failed to initialize the controller %d", ret);
 		goto deinit;
 	}
+
+	sl_btctrl_configure_completed_packets_reporting(
+		SL_BT_CONTROLLER_COMPLETED_PACKETS_THRESHOLD,
+		SL_BT_CONTROLLER_COMPLETED_PACKETS_EVENTS_TIMEOUT);
 
 	sl_bthci_init_upper();
 	sl_btctrl_hci_parser_init_default();

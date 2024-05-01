@@ -506,7 +506,7 @@ static void xfer_work_handler(struct k_work *item)
 		}
 
 xfer_work_error:
-		k_mem_slab_free(&usbfsotg_ee_slab, (void **)&ev);
+		k_mem_slab_free(&usbfsotg_ee_slab, (void *)ev);
 	}
 }
 
@@ -821,7 +821,8 @@ static int usbfsotg_ep_clear_halt(const struct device *dev,
 	if (USB_EP_GET_IDX(cfg->addr) == 0U) {
 		usbfsotg_resume_tx(dev);
 	} else {
-		/* TODO: trigger queued transfers? */
+		/* trigger queued transfers */
+		usbfsotg_event_submit(dev, cfg->addr, USBFSOTG_EVT_XFER);
 	}
 
 	return 0;

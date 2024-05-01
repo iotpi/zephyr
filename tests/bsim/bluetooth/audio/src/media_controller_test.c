@@ -1585,6 +1585,8 @@ void initialize_bluetooth(void)
 
 	WAIT_FOR_FLAG(ble_is_initialized);
 	printk("Bluetooth initialized\n");
+
+	bt_le_scan_cb_register(&common_scan_cb);
 }
 
 void scan_and_connect(void)
@@ -1592,7 +1594,7 @@ void scan_and_connect(void)
 	char addr[BT_ADDR_LE_STR_LEN];
 	int err;
 
-	err = bt_le_scan_start(BT_LE_SCAN_PASSIVE, device_found);
+	err = bt_le_scan_start(BT_LE_SCAN_PASSIVE, NULL);
 	if (err) {
 		FAIL("Failed to start scanning (err %d\n)", err);
 		return;
@@ -1645,7 +1647,7 @@ void test_media_controller_remote_player(void)
 	initialize_bluetooth();
 	initialize_media();
 
-	err = bt_le_adv_start(BT_LE_ADV_CONN_NAME, ad, AD_SIZE, NULL, 0);
+	err = bt_le_adv_start(BT_LE_ADV_CONN, ad, AD_SIZE, NULL, 0);
 	if (err) {
 		FAIL("Advertising failed to start (err %d)\n", err);
 	}

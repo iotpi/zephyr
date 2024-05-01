@@ -116,4 +116,14 @@ source "drivers/watchdog/Kconfig.andes_atcwdt200"
 
 source "drivers/watchdog/Kconfig.nxp_fs26"
 
+source "drivers/watchdog/Kconfig.ambiq"
+
+source "drivers/watchdog/Kconfig.shell"
+
+source "drivers/watchdog/Kconfig.xmc4xxx"
+
+source "drivers/watchdog/Kconfig.numaker"
+
+source "drivers/watchdog/Kconfig.ene"
+
 endif # WATCHDOG

@@ -25,6 +25,9 @@ description: |
         DCDC3 {
           /* all properties for DCDC3 */
         };
+        LDOIO0 {
+          /* all properties for LDOIO0 */
+        };
         LDO2 {
           /* all properties for LDO2 */
         };
@@ -48,6 +51,7 @@ child-binding:
         - regulator-max-microvolt
         - regulator-always-on
         - regulator-boot-on
+        - regulator-boot-off
         - regulator-initial-mode
         - regulator-allowed-modes
 

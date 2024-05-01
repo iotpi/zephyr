@@ -14,6 +14,7 @@
 #include <zephyr/sys/time_units.h>
 #include <zephyr/sys/atomic.h>
 #include <zephyr/toolchain.h>
+#include <zephyr/pm/device.h>
 
 #if DT_HAS_COMPAT_STATUS_OKAY(zephyr_power_state)
 
@@ -112,7 +113,7 @@ static void update_next_event(uint32_t cyc)
 		 * the comparison.
 		 */
 		if (cyc_evt < cyc) {
-			cyc_evt += UINT32_MAX + 1U;
+			cyc_evt += (uint64_t)UINT32_MAX + 1U;
 		}
 
 		if ((new_next_event_cyc < 0) ||
@@ -123,7 +124,7 @@ static void update_next_event(uint32_t cyc)
 
 	/* undo padding for events in the [0, cyc) range */
 	if (new_next_event_cyc > UINT32_MAX) {
-		new_next_event_cyc -= UINT32_MAX + 1U;
+		new_next_event_cyc -= (uint64_t)UINT32_MAX + 1U;
 	}
 
 	next_event_cyc = new_next_event_cyc;
@@ -135,6 +136,12 @@ const struct pm_state_info *pm_policy_next_state(uint8_t cpu, int32_t ticks)
 	int64_t cyc = -1;
 	uint8_t num_cpu_states;
 	const struct pm_state_info *cpu_states;
+
+#ifdef CONFIG_PM_NEED_ALL_DEVICES_IDLE
+	if (pm_device_is_any_busy()) {
+		return NULL;
+	}
+#endif
 
 	if (ticks != K_TICKS_FOREVER) {
 		cyc = k_ticks_to_cyc_ceil32(ticks);

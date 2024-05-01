@@ -12,7 +12,7 @@
 #include <zephyr/bluetooth/addr.h>
 #include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/bluetooth/conn.h>
-#include <zephyr/toolchain/gcc.h>
+#include <zephyr/toolchain.h>
 
 DEFINE_FLAG(flag_new_address);
 
@@ -88,7 +88,7 @@ void start_advertising(void)
 	params.sid = 0;
 	params.secondary_max_skip = 0;
 	params.options = BT_LE_ADV_OPT_EXT_ADV | BT_LE_ADV_OPT_SCANNABLE |
-			 BT_LE_ADV_OPT_NOTIFY_SCAN_REQ | BT_LE_ADV_OPT_USE_NAME;
+			 BT_LE_ADV_OPT_NOTIFY_SCAN_REQ;
 	params.interval_min = BT_GAP_ADV_FAST_INT_MIN_1;
 	params.interval_max = BT_GAP_ADV_FAST_INT_MAX_1;
 	params.peer = NULL;

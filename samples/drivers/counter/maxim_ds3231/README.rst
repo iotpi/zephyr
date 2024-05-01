@@ -1,7 +1,8 @@
-.. _maxim-ds3231-sample:
+.. zephyr:code-sample:: ds3231
+   :name: DS3231 TCXO RTC
+   :relevant-api: counter_interface
 
-Maxim DS3231 TCXO RTC Sample Application
-########################################
+   Interact with a DS3231 real-time clock using the counter API and dedicated driver API.
 
 Overview
 ********
@@ -14,7 +15,7 @@ test it.
 Annotated Example Output
 ************************
 
-The sample first displays the boot banner, board identifier and
+The sample first displays the boot banner, board name and
 frequency of the local clock used for synchronization, and whether the
 DS3231 has recorded a loss-of-oscillator::
 

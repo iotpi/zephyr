@@ -6,7 +6,7 @@
 #include <zephyr/ztress.h>
 #include <zephyr/ztest_test.h>
 #include <zephyr/sys/printk.h>
-#include <zephyr/random/rand32.h>
+#include <zephyr/random/random.h>
 #include <string.h>
 
 /* Flag set at startup which determines if stress test can run on this platform.
@@ -216,7 +216,7 @@ static k_timeout_t randomize_t(k_timeout_t t)
 static void microdelay(void)
 {
 	static volatile int microdelay_cnt;
-	uint32_t repeat = sys_rand32_get() & 0xff;
+	uint8_t repeat = sys_rand8_get();
 
 	for (int i = 0; i < repeat; i++) {
 		microdelay_cnt++;

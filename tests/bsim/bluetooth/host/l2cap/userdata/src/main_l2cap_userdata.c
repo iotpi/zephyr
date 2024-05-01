@@ -48,7 +48,8 @@ static const struct bt_l2cap_chan_ops l2cap_ops = {
 
 static struct bt_l2cap_le_chan channel;
 
-static int accept(struct bt_conn *conn, struct bt_l2cap_chan **l2cap_chan)
+static int accept(struct bt_conn *conn, struct bt_l2cap_server *server,
+		  struct bt_l2cap_chan **l2cap_chan)
 {
 	channel.chan.ops = &l2cap_ops;
 	*l2cap_chan = &channel.chan;
@@ -150,7 +151,7 @@ static void test_peripheral_main(void)
 		return;
 	}
 
-	err = bt_le_adv_start(BT_LE_ADV_CONN_NAME, ad, ARRAY_SIZE(ad), NULL, 0);
+	err = bt_le_adv_start(BT_LE_ADV_CONN, ad, ARRAY_SIZE(ad), NULL, 0);
 	if (err != 0) {
 		FAIL("Advertising failed to start (err %d)\n", err);
 		return;
