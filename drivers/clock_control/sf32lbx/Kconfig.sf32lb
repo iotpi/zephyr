@@ -1,0 +1,15 @@
+# Copyright (c) 2025 Qingdao IotPi Ltd.
+# SPDX-License-Identifier: Apache-2.0
+
+config CLOCK_CONTROL_SF32LB_CLK
+    bool "SF32LBx clock control drivers"
+    default y
+    depends on DT_HAS_SIFLI_SF32LB_XT_CLK_ENABLED || \
+    DT_HAS_SIFLI_SF32LB_RC_CLK_ENABLED
+
+config CLOCK_CONTROL_SF32LB_HPSYS
+    bool "SF32LB HPSYS clock control drivers"
+    default y
+    depends on DT_HAS_SIFLI_SF32LB_HPSYS_RCC_ENABLED || \
+    DT_HAS_SIFLI_SF32LB_HPSYS_AON_ENABLED || \
+    DT_HAS_SIFLI_SF32LB_PERI_HPSYS_CLK_ENABLED

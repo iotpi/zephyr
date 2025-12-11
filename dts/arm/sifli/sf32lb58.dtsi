@@ -11,7 +11,7 @@
 / {
     clocks {
         clk_lrc10: clk-lrc10 {
-            compatible = "sifli,sf32lb58-rc-clk";
+            compatible = "sifli,sf32lb-rc-clk";
             #clock-cells = <0>;
             clock-frequency = <DT_FREQ_K(10)>;
             status = "disabled";
@@ -25,14 +25,14 @@
         };
 
         clk_hrc48: clk-hrc48 {
-            compatible = "sifli,sf32lb58-rc-clk";
+            compatible = "sifli,sf32lb-rc-clk";
             #clock-cells = <0>;
             clock-frequency = <DT_FREQ_M(48)>;
             status = "okay";  /* hrc48 starts working when chip started */
         };
 
         clk_hxt48: clk-hxt48 {
-            compatible = "sifli,sf32lb58-xt-clk";
+            compatible = "sifli,sf32lb-xt-clk";
             #clock-cells = <0>;
             clock-frequency = <DT_FREQ_M(48)>;
             status = "okay"; /* hxt48 starts working when chip started */

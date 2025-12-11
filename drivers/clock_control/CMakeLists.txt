@@ -140,5 +140,5 @@ zephyr_library_sources_ifdef(CONFIG_SOC_SERIES_AGILEX clock_agilex_ll.c)
 # zephyr-keep-sorted-stop
 
 if(CONFIG_SOC_SERIES_SF32LB58)
-  add_subdirectory(sf32lb58)
+  add_subdirectory(sf32lbx)
 endif()

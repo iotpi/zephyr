@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#define DT_DRV_COMPAT sifli_sf32lb58_rc_clk
+#define DT_DRV_COMPAT sifli_sf32lb_rc_clk
 
 #include <stdint.h>
 
