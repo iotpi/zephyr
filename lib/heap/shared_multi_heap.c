@@ -112,6 +112,16 @@ void *shared_multi_heap_aligned_alloc(enum shared_multi_heap_attr attr,
 					    align, bytes);
 }
 
+size_t shared_multi_heap_usable_size(enum shared_multi_heap_attr attr, void *ptr)
+{
+	if (attr >= MAX_SHARED_MULTI_HEAP_ATTR) {
+		return 0;
+	}
+
+    const struct sys_multi_heap_rec *rec = sys_multi_heap_get_heap(&shared_multi_heap, ptr);
+    return sys_heap_usable_size(rec->heap, ptr);
+}
+
 int shared_multi_heap_pool_init(void)
 {
 	static atomic_t state;
